@@ -19,15 +19,8 @@ app.use(
   })
 );
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  next();
-});
+// Configure o middleware CORS
+app.use(cors());
 
 // Middleware para interceptar todas as requisições
 function verifyJWT(req, res, next) {
@@ -38,17 +31,15 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
- 
- 
+
 const connection = mysql.createConnection({
   host: process.env.HOST, // Host do banco de dados
   user: process.env.USER, // Nome de usuário do banco de dados
   password: process.env.PASSWORD, // Senha do banco de dados
   database: process.env.DATABASE, // Nome do banco de dados
 });
-console.log('process.env.TESTE', process.env.TEST)
+console.log("process.env.TESTE", process.env.TEST);
 
- 
 connectDB();
 
 // Middleware para o parsing de JSON no corpo das requisições
@@ -337,7 +328,7 @@ async function validateCode(req, res) {
           resultFriendCpdeDB[0]?.idUser
         );
         //Adicionar partida para outro player
-        const itemGame = 1// generateNumberItem(4);
+        const itemGame = 1; // generateNumberItem(4);
         await queryDB(
           `INSERT INTO games (idUser, statusGame, itemGame) VALUES ('${resultFriendCpdeDB[0].idUser}', 'open', '${itemGame}')`
         );
@@ -358,7 +349,7 @@ async function validateCode(req, res) {
 
     if (!resultDBgames.length) {
       console.warn("Cadastrar partida");
-      const itemGame = 1//generateNumberItem(4);
+      const itemGame = 1; //generateNumberItem(4);
       queryDB(
         `INSERT INTO games (idUser, statusGame, itemGame) VALUES ('${idUser}', 'open', '${itemGame}')`
       );
@@ -374,7 +365,6 @@ async function validateCode(req, res) {
     console.log("resultDB[0].smsCode", resultDB[0].smsCode);
     return res.status(400).json({ message: "Código inválido" });
   }
-
 }
 
 async function validateLogin(req, res) {
@@ -425,7 +415,7 @@ async function validateLogin(req, res) {
      * Primeiro acesso
      */
     console.log("Cadastro nao existe");
-    const smsCode = 1234//generateSMStoken();
+    const smsCode = 1234; //generateSMStoken();
     console.log("codSMS:", smsCode);
     const resAddDB = await queryDB(
       `INSERT INTO users (name, phone, smsCode, smsStatus) VALUES ('${name}', '${phone}', ${smsCode}, 'notconfirmed')`
