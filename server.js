@@ -55,6 +55,7 @@ app.use(express.json());
 
 // Iniciar o servidor
 app.listen(port, () => {
+  console.log('process.env.TEST', process.env.TEST)
   console.log(`Servidor está rodando na porta ${port}`);
 });
 ////////////////////////////////////////////////////////////////////////////////
