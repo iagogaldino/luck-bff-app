@@ -46,6 +46,7 @@ const connection = mysql.createConnection({
   password: process.env.PASSWORD, // Senha do banco de dados
   database: process.env.DATABASE, // Nome do banco de dados
 });
+console.log('process.env.TESTE', process.env.TEST)
 
  
 connectDB();
@@ -55,7 +56,6 @@ app.use(express.json());
 
 // Iniciar o servidor
 app.listen(port, () => {
-  console.log('process.env.TEST', process.env.TEST)
   console.log(`Servidor está rodando na porta ${port}`);
 });
 ////////////////////////////////////////////////////////////////////////////////
