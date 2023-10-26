@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
 const cors = require("cors");
+require("dotenv").config();
 const mysql = require("mysql2");
 const session = require("express-session");
 const jsonwebtoken = require("jsonwebtoken");
@@ -37,15 +38,16 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
-
-// Configuração da conexão com o banco de dados
+ 
+ 
 const connection = mysql.createConnection({
-  host: "localhost", // Host do banco de dados
-  user: "root", // Nome de usuário do banco de dados
-  password: "admin", // Senha do banco de dados
-  database: "sys", // Nome do banco de dados
+  host: process.env.HOST, // Host do banco de dados
+  user: process.env.USER, // Nome de usuário do banco de dados
+  password: process.env.PASSWORD, // Senha do banco de dados
+  database: process.env.DATABASE, // Nome do banco de dados
 });
 
+ 
 connectDB();
 
 // Middleware para o parsing de JSON no corpo das requisições
