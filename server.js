@@ -163,9 +163,13 @@ async function validateQrCode(req, res) {
   res.status(400).json({ message: "Ticket não encontrado!" });
 }
 
+const linkMap = "https://maps.app.goo.gl/8XxbJinGfXbWdPJK7";
+const titleBrind = "Coca Cola";
+const statusGame = false;
 async function getConfigApp(req, res) {
-  const usersWIN = await queryDB("SELECT name FROM userswin");
-  const response = { usersWIN };
+  const usersWIN = await queryDB("SELECT name, description FROM userswin");
+
+  const response = { usersWIN, linkMap, titleBrind, statusGame };
   res.json(response);
 }
 
@@ -255,8 +259,9 @@ async function validateItemGame(req, res) {
       const userDB = await queryDB(
         `SELECT name FROM users WHERE idUser = '${idUser}'`
       );
+      const titleBrindLowerCase = titleBrind.toLocaleLowerCase();
       await queryDB(
-        `INSERT INTO userswin (name, userId) VALUES ('${userDB[0].name}', '${idUser}')`
+        `INSERT INTO userswin (name, userId, description) VALUES ('${userDB[0].name}', '${idUser}', '${titleBrindLowerCase}')`
       );
       res.json();
     } else {
