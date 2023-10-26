@@ -462,6 +462,7 @@ function queryDB(sql) {
     connection.query(sql, (err, rows, fields) => {
       if (err) {
         console.error("Erro na consulta:", err);
+        connectDB();
         reject(err);
       } else {
         // console.log(rows);
