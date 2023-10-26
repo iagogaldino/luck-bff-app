@@ -164,8 +164,8 @@ async function validateQrCode(req, res) {
 }
 
 const linkMap = "https://maps.app.goo.gl/8XxbJinGfXbWdPJK7";
-const titleBrind = "Coca Cola";
-const statusGame = false;
+const titleBrind = "Espetinho completo";
+const statusGame = true;
 async function getConfigApp(req, res) {
   const usersWIN = await queryDB("SELECT name, description FROM userswin");
 
@@ -442,7 +442,7 @@ function generateSMStoken() {
   return randomCode;
 }
 
-function connectDB(sql) {
+function connectDB() {
   // Estabelecer a conexão
   connection.connect((err) => {
     if (err) {
