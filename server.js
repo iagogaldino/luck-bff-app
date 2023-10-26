@@ -314,7 +314,7 @@ async function validateCode(req, res) {
 
   // Consulta código do usuario na base
   const resultDB = await queryDB(
-    `SELECT smsCode FROM sys.users WHERE idUser = '${idUser}'`
+    `SELECT smsCode FROM users WHERE idUser = '${idUser}'`
   );
 
   // Consulta código do amigo
@@ -395,7 +395,7 @@ async function validateLogin(req, res) {
   }
 
   const resultDB = await queryDB(
-    `SELECT name, idUser, smsStatus FROM sys.users WHERE phone = '${phone}'`
+    `SELECT name, idUser, smsStatus FROM users WHERE phone = '${phone}'`
   );
 
   if (resultDB.length) {
