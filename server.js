@@ -372,6 +372,11 @@ async function validateCode(req, res) {
   }
 }
 
+function contemApenasLetrasEEspacos(str) {
+  // Usamos uma expressão regular que verifica se a string contém apenas letras maiúsculas, minúsculas e espaços.
+  return /^[A-Za-z\s]+$/.test(str);
+}
+
 async function validateLogin(req, res) {
   const name = req.query.name;
   const phone = req.query.phone;
@@ -381,7 +386,7 @@ async function validateLogin(req, res) {
     return res.status(400).json({ message: "Informe o nome" });
   }
 
-  if (name && !padrao.test(name)) {
+  if (name && !contemApenasLetrasEEspacos(name)) {
     return res.status(400).json({ message: "O nome só poder conter letras" });
   }
 
