@@ -106,7 +106,28 @@ app.post("/addFriendCode", async (req, res) => {
   res.json({ message: "ok" });
 });
 
+app.post("/confirmName", verifyJWT, (req, res) => {
+  confirmName(req, res);
+});
+
 // functions
+async function confirmName(req, res) {
+  const { name } = req.body;
+  const idUser = USER_ID;
+
+  if (!name) {
+    return res.status(400).json({ message: "Informe um nome válido" });
+  }
+
+  if (name && !contemApenasLetrasEEspacos(name)) {
+    return res.status(400).json({ message: "O nome só poder conter letras" });
+  }
+
+  await queryDB(`UPDATE users SET name = '${name}' WHERE idUser = '${idUser}'`);
+
+  res.json({ USER_ID });
+}
+
 async function getInfoUser(req, res) {
   res.json({ USER_ID });
 }
@@ -173,11 +194,16 @@ async function getQRcode(req, res) {
     `SELECT idGame, stateItem FROM games WHERE idUser = '${idUser}' AND statusGame = 'win' AND ticketStatus = 'not-used'`
   );
 
-  console.log("getQRcode", "USER_ID:", USER_ID);
+  const userWIN = await queryDB(
+    `SELECT description FROM userswin WHERE idGame = '${resultDBgame[0].idGame}'`
+  );
+
+  console.log("getQRcode", "USER_ID:", USER_ID, userWIN);
   if (resultDBgame.length) {
     const idGame = resultDBgame[0].idGame;
     const stateItem = resultDBgame[0].stateItem;
     const codeQrcode = `${URLADMIN}/?code=${idGame}`;
+    const description = userWIN[0].description;
     const type = "svg";
     const code = qrcode.imageSync(codeQrcode, { type: type });
 
@@ -185,7 +211,7 @@ async function getQRcode(req, res) {
       `UPDATE games SET stateItem = '0' WHERE idGame = '${resultDBgame[0].idGame}'`
     );
 
-    res.json({ message: "Ticket do jogo ganho", svg: code, stateItem });
+    res.json({ message: "Ticket do jogo ganho", svg: code, stateItem, description });
     return;
   }
   console.warn("[não tem jogo ganho]");
@@ -254,8 +280,9 @@ async function validateItemGame(req, res) {
         `SELECT name FROM users WHERE idUser = '${idUser}'`
       );
       const titleBrindLowerCase = titleBrind.toLocaleLowerCase();
+      console.log('titleBrindLowerCase', titleBrindLowerCase)
       await queryDB(
-        `INSERT INTO userswin (name, userId, description) VALUES ('${userDB[0].name}', '${idUser}', '${titleBrindLowerCase}')`
+        `INSERT INTO userswin (name, userId, description, idGame) VALUES ('${userDB[0].name}', '${idUser}', '${titleBrindLowerCase}', '${itemWIN[0].idGame}')`
       );
       res.json();
     } else {
@@ -284,14 +311,19 @@ async function validateItemGame(req, res) {
   }
 }
 
-function sendSMS(req, res) {
-  console.log(req.query);
+function aceitarApenasPalavras(texto) {
+  // Expressão regular para verificar se a string contém apenas palavras
+  // (sem espaços, letras e números)
+  const padrao = /^[a-zA-Z0-9]+$/;
+  return padrao.test(texto);
+}
 
+function sendSMS(req, res) {
   res.json({ message: "SMS enviado para o telfone (74)9.8842-0307" });
 }
 
 async function validateCode(req, res) {
-  const { code, codeFriend } = req.query;
+  let { code, codeFriend } = req.query;
   const idUser = USER_ID;
   let resultFriendCpdeDB = [];
   if (!code) {
@@ -299,8 +331,10 @@ async function validateCode(req, res) {
   }
 
   if (!idUser) {
-    return res.status(400).json({ message: "Erro phoneSession" });
+    return res.status(400).json({ message: "Erro idUserSession" });
   }
+
+  code = removerEspacos(code);
 
   // Consulta código do usuario na base
   const resultDB = await queryDB(
@@ -308,52 +342,76 @@ async function validateCode(req, res) {
   );
 
   // Consulta código do amigo
-  if (codeFriend) {
+  if (typeof codeFriend != "undefined" && codeFriend) {
+    codeFriend = removerEspacos(codeFriend).toLocaleLowerCase();
+
+    if (!aceitarApenasPalavras(codeFriend)) {
+      return res
+        .status(400)
+        .json({ message: "Verifique o código amigo informado" });
+    }
     resultFriendCpdeDB[0] = { idUser: 0 };
     resultFriendCpdeDB = await queryDB(
       `SELECT idUser FROM users WHERE codeFriend = '${codeFriend}'`
     );
   }
 
+  const userDB = await queryDB(
+    `SELECT idUser, smsCode FROM users WHERE idUser = '${idUser}' AND smsCode = 'used'`
+  );
+  if (userDB.length && userDB[0].smsCode == "used") {
+    return res.json({
+      message: "sms code already verified",
+      us: userDB[0].idUser,
+    });
+    if (codeFriend) {
+      return res.status(400).json({
+        message: "Você não pode mais adicionar um código amigo",
+        code,
+        codeFriend,
+      });
+    }
+  }
+
   // Verifica se o código de o usuário informou é igual ao que esta salvo na base
   // console.log('// Verifica se o código de o usuário informou é igual ao que esta salvo na base', resultDB[0].smsCode, parseInt(code))
   if (parseInt(resultDB[0].smsCode) == parseInt(code)) {
     if (codeFriend) {
-      console.log("codeFriend", resultFriendCpdeDB);
       if (resultFriendCpdeDB[0]?.idUser) {
-        console.log(resultFriendCpdeDB);
-        console.log(
-          "adiciona partida para outro jogador",
-          resultFriendCpdeDB[0]?.idUser
-        );
         //Adicionar partida para outro player
+
         const itemGame = 1; // generateNumberItem(4);
         await queryDB(
           `INSERT INTO games (idUser, statusGame, itemGame) VALUES ('${resultFriendCpdeDB[0].idUser}', 'open', '${itemGame}')`
         );
       } else {
-        return res.status(400).json({ message: "Código amigo inválido" });
+        return res
+          .status(400)
+          .json({ message: "Código amigo inválido", code, codeFriend });
       }
     }
 
+    //Atualizar status de sms do usuario
     await queryDB(
-      `UPDATE users SET smsStatus = 'confirmed', smsCode = '${resultDB[0].smsCode}-used' WHERE idUser = '${idUser}'`
+      `UPDATE users SET smsStatus = 'confirmed', smsCode = 'used' WHERE idUser = '${idUser}'`
     );
 
     //Verifica se o usuario tem alguma partida ja criada,
-    //Se tiver nao cria outra
     const resultDBgames = await queryDB(
       `SELECT idGame FROM games WHERE idUser = '${idUser}'`
     );
 
+    //Se tiver games NAO cria outro
     if (!resultDBgames.length) {
-      console.warn("Cadastrar partida");
+      const valueCodeFriend = "movimento".toLocaleLowerCase();
       const itemGame = 1; //generateNumberItem(4);
       queryDB(
         `INSERT INTO games (idUser, statusGame, itemGame) VALUES ('${idUser}', 'open', '${itemGame}')`
       );
       // Adiviona código amigo para o usuario logado
-      const codeFriend = `movimento${idUser}${generateNumberItem(100)}`;
+      const codeFriend = `${valueCodeFriend}${idUser}${generateNumberItem(
+        100
+      )}`;
       await queryDB(
         `UPDATE users SET codeFriend = '${codeFriend}' WHERE idUser = '${idUser}'`
       );
@@ -361,7 +419,6 @@ async function validateCode(req, res) {
 
     res.json();
   } else {
-    console.log("resultDB[0].smsCode", resultDB[0].smsCode);
     return res.status(400).json({ message: "Código inválido" });
   }
 }
@@ -371,18 +428,23 @@ function contemApenasLetrasEEspacos(str) {
   return /^[A-Za-z\s]+$/.test(str);
 }
 
+function removerEspacos(value) {
+  // Expressão regular para substituir todos os espaços por uma string
+  return value.replace(/\s/g, "");
+}
+
 async function validateLogin(req, res) {
   const name = req.query.name;
   const phone = req.query.phone;
   const padrao = /^[a-zA-Z]+$/;
 
-  if (!name) {
-    return res.status(400).json({ message: "Informe o nome" });
-  }
+  // if (!name) {
+  //   return res.status(400).json({ message: "Informe o nome" });
+  // }
 
-  if (name && !contemApenasLetrasEEspacos(name)) {
-    return res.status(400).json({ message: "O nome só poder conter letras" });
-  }
+  // if (name && !contemApenasLetrasEEspacos(name)) {
+  //   return res.status(400).json({ message: "O nome só poder conter letras" });
+  // }
 
   if (!phone) {
     return res.status(400).json({ message: "Informe o telefone" });
@@ -413,7 +475,7 @@ async function validateLogin(req, res) {
       statusUser = 4;
     }
 
-    res.json({ message: "Usuário já cadastrado", status: statusUser, token });
+    res.json({ message: "Usuário já cadastrado", status: statusUser, token, userName: resultDB[0].name });
   } else {
     /**
      * Primeiro acesso
@@ -422,7 +484,7 @@ async function validateLogin(req, res) {
     const smsCode = 1234; //generateSMStoken();
     console.log("codSMS:", smsCode);
     const resAddDB = await queryDB(
-      `INSERT INTO users (name, phone, smsCode, smsStatus) VALUES ('${name}', '${phone}', ${smsCode}, 'notconfirmed')`
+      `INSERT INTO users (phone, smsCode, smsStatus) VALUES ('${phone}', ${smsCode}, 'notconfirmed')`
     );
     const idUser = await queryDB(
       `SELECT idUser FROM users WHERE phone = '${phone}'`
@@ -497,7 +559,7 @@ function handleDisconnect() {
     } // to avoid a hot loop, and to allow our node script to
   }); // process asynchronous requests in the meantime.
   // If you're also serving http, display a 503 error.
-  console.log('Banco de dados = OK')
+  console.log("Banco de dados = OK");
   connection.on("error", function (err) {
     console.log("db error", err);
     if (err.code === "PROTOCOL_CONNECTION_LOST") {
