@@ -459,21 +459,16 @@ function generateSMStoken() {
 // }
 
 function connectDB() {
-  return new Promise((resolve, reject) => {
-    connection.connect((err) => {
-      if (err) {
-        console.error("Erro ao conectar ao banco de dados:", err);
-        reject(err); // Rejeita a promessa em caso de erro
-      } else {
-        console.log("Conexão ao banco de dados MySQL estabelecida com sucesso.");
-        resolve(connection); // Resolve a promessa com a conexão bem-sucedida
-      }
-    });
+  connection.connect((err) => {
+    if (err) {
+      console.error("Erro ao conectar ao banco de dados:", err);
+    } else {
+      console.log("Conexão ao banco de dados MySQL estabelecida com sucesso.");
+    }
   });
 }
 
 async function queryDB(sql) {
-  await connectDB();
   return new Promise((resolve, reject) => {
     connection.query(sql, (err, rows, fields) => {
       if (err) {
