@@ -8,9 +8,18 @@ const session = require("express-session");
 const jsonwebtoken = require("jsonwebtoken");
 const qrcode = require("qr-image");
 const SECRET = "bffmovimento";
-let USER_ID = 0; //remover MOCK
+let USER_ID = 0;
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// USER-APP CONFIG
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 const URLADMIN = "http://localhost:4300";
-
+const linkMap = "https://maps.app.goo.gl/8XxbJinGfXbWdPJK7";
+const titleBrind = "Espetinho completo";
+const statusGame = true;
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 app.use(
   session({
     secret: "segredo", // Uma chave secreta para assinar as sessões (deve ser mantida em segredo)
@@ -31,8 +40,6 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
-
-console.log("process.env.TESTE", process.env.TEST);
 
 connectDB();
 
@@ -86,6 +93,9 @@ app.get("/getConfigApp", (req, res) => {
 });
 
 // Rota POST
+app.post("/addUsersWinFake", (req, res) => {
+  addUsersWinFake(req, res);
+});
 
 app.post("/toggleItem", (req, res) => {
   toggleItem(req, res);
@@ -135,8 +145,19 @@ async function getInfoUser(req, res) {
 async function resetDB(req, res) {
   await queryDB(`DELETE from users`);
   await queryDB(`DELETE from games`);
+  await queryDB(`DELETE from userswin`);
   res.json({ message: "DB CLEAN" });
 }
+
+async function addUsersWinFake(req, res) {
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Juliano', 'espetinho completo');");
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Fabiana', '30% desconto');");
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Thiago', 'espetinho completo');");
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Fabiana', 'coca cola');");
+  res.json({ message: "addUsersWinFake" });
+}
+
+ 
 
 async function validateQrCode(req, res) {
   console.log("validateQrCode");
@@ -178,9 +199,6 @@ async function validateQrCode(req, res) {
   res.status(400).json({ message: "Ticket não encontrado!" });
 }
 
-const linkMap = "https://maps.app.goo.gl/8XxbJinGfXbWdPJK7";
-const titleBrind = "Espetinho completo";
-const statusGame = true;
 async function getConfigApp(req, res) {
   const usersWIN = await queryDB("SELECT name, description FROM userswin");
 
@@ -380,7 +398,7 @@ async function validateCode(req, res) {
       if (resultFriendCpdeDB[0]?.idUser) {
         //Adicionar partida para outro player
 
-        const itemGame = 1; // generateNumberItem(4);
+        const itemGame = /*1;*/generateNumberItem(4);
         await queryDB(
           `INSERT INTO games (idUser, statusGame, itemGame) VALUES ('${resultFriendCpdeDB[0].idUser}', 'open', '${itemGame}')`
         );
@@ -481,7 +499,7 @@ async function validateLogin(req, res) {
      * Primeiro acesso
      */
     console.log("Cadastro nao existe");
-    const smsCode = 1234; //generateSMStoken();
+    const smsCode = /*1234;*/generateSMStoken();
     console.log("codSMS:", smsCode);
     const resAddDB = await queryDB(
       `INSERT INTO users (phone, smsCode, smsStatus) VALUES ('${phone}', ${smsCode}, 'notconfirmed')`
