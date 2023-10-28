@@ -9,7 +9,6 @@ const jsonwebtoken = require("jsonwebtoken");
 const qrcode = require("qr-image");
 const SECRET = "bffmovimento";
 let USER_ID = 0;
-const sendsms = require("./sms");
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 // USER-APP CONFIG
@@ -152,20 +151,14 @@ async function resetDB(req, res) {
 }
 
 async function addUsersWinFake(req, res) {
-  await queryDB(
-    "INSERT INTO `userswin` (`name`, `description`) VALUES ('Juliano', 'espetinho completo');"
-  );
-  await queryDB(
-    "INSERT INTO `userswin` (`name`, `description`) VALUES ('Fabiana', '30% desconto');"
-  );
-  await queryDB(
-    "INSERT INTO `userswin` (`name`, `description`) VALUES ('Thiago', 'espetinho completo');"
-  );
-  await queryDB(
-    "INSERT INTO `userswin` (`name`, `description`) VALUES ('Fabiana', 'coca cola');"
-  );
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Juliano', 'espetinho completo');");
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Fabiana', '30% desconto');");
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Thiago', 'espetinho completo');");
+  await queryDB("INSERT INTO `userswin` (`name`, `description`) VALUES ('Fabiana', 'coca cola');");
   res.json({ message: "addUsersWinFake" });
 }
+
+ 
 
 async function validateQrCode(req, res) {
   console.log("validateQrCode");
@@ -237,12 +230,7 @@ async function getQRcode(req, res) {
       `UPDATE games SET stateItem = '0' WHERE idGame = '${resultDBgame[0].idGame}'`
     );
 
-    res.json({
-      message: "Ticket do jogo ganho",
-      svg: code,
-      stateItem,
-      description,
-    });
+    res.json({ message: "Ticket do jogo ganho", svg: code, stateItem, description });
     return;
   }
   console.warn("[não tem jogo ganho]");
@@ -311,7 +299,7 @@ async function validateItemGame(req, res) {
         `SELECT name FROM users WHERE idUser = '${idUser}'`
       );
       const titleBrindLowerCase = titleBrind.toLocaleLowerCase();
-      console.log("titleBrindLowerCase", titleBrindLowerCase);
+      console.log('titleBrindLowerCase', titleBrindLowerCase)
       await queryDB(
         `INSERT INTO userswin (name, userId, description, idGame) VALUES ('${userDB[0].name}', '${idUser}', '${titleBrindLowerCase}', '${itemWIN[0].idGame}')`
       );
@@ -411,7 +399,7 @@ async function validateCode(req, res) {
       if (resultFriendCpdeDB[0]?.idUser) {
         //Adicionar partida para outro player
 
-        const itemGame = /*1;*/ generateNumberItem(4);
+        const itemGame = /*1;*/generateNumberItem(4);
         await queryDB(
           `INSERT INTO games (idUser, statusGame, itemGame) VALUES ('${resultFriendCpdeDB[0].idUser}', 'open', '${itemGame}')`
         );
@@ -506,18 +494,13 @@ async function validateLogin(req, res) {
       statusUser = 4;
     }
 
-    res.json({
-      message: "Usuário já cadastrado",
-      status: statusUser,
-      token,
-      userName: resultDB[0].name,
-    });
+    res.json({ message: "Usuário já cadastrado", status: statusUser, token, userName: resultDB[0].name });
   } else {
     /**
      * Primeiro acesso
      */
-    const smsCode = /*1234;*/ generateSMStoken();
-    sendsms(phone, `Petiscaria Movimento:\n Código para entrar em sua conta: ${smsCode}`);
+    console.log("Cadastro nao existe");
+    const smsCode = /*1234;*/generateSMStoken();
     console.log("codSMS:", smsCode);
     const resAddDB = await queryDB(
       `INSERT INTO users (phone, smsCode, smsStatus) VALUES ('${phone}', ${smsCode}, 'notconfirmed')`
