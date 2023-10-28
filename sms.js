@@ -8,7 +8,7 @@ function sendSMS(phone, message) {
     url: "https://sms.comtele.com.br/api/v2/send",
     headers: {
       "content-type": "application/json",
-      "auth-key": "09a9e514-d535-4197-9c53-3a7c7163ad55",
+      "auth-key": process.env.AUTHKEY,
     },
     body: `{"Sender":"sender_id","Receivers":"[${phone}]","Content":"${message}"}`,
   };
