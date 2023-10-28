@@ -87,7 +87,7 @@ app.get("/validateCode", verifyJWT, (req, res) => {
   validateCode(req, res);
 });
 
-app.get("/sendSMS", limiterSendSms, (req, res) => {
+app.get("/sendSMS", verifyJWT, limiterSendSms, (req, res) => {
   sendSMS(req, res);
 });
 
@@ -363,7 +363,7 @@ function aceitarApenasPalavras(texto) {
 }
 
 async function sendSMS(req, res) {
-  const idUser = 159; //USER_ID;
+  const idUser = USER_ID;
   const resultDB = await queryDB(
     `SELECT phone, smsCode FROM users WHERE idUser = '${idUser}'`
   );
