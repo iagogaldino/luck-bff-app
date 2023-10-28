@@ -46,7 +46,7 @@ function verifyJWT(req, res, next) {
 
 // Função personalizada para manipular a resposta de erro
 const customErrorHandlerSendSms = (req, res) => {
-  res.status(429).json({ error: 'Aguarde 30 segundos para poder reenviar o código.' });
+  res.status(429).json({ message: 'Aguarde 30 segundos para poder reenviar o código.' });
 };
 // Middleware de limitação de taxa
 const limiterSendSms = rateLimit({
