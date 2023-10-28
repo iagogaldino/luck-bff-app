@@ -16,7 +16,7 @@ const sendsms = require("./sms");
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 // const URLADMIN = "http://localhost:4300";
-const URLADMIN = "https://luck-admin-app.onrender.com/";
+const URLADMIN = "https://luck-admin-app.onrender.com";
 const linkMap = "https://maps.app.goo.gl/8XxbJinGfXbWdPJK7";
 const titleBrind = "Espetinho completo";
 const statusGame = true;
