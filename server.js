@@ -10,6 +10,7 @@ const qrcode = require("qr-image");
 const SECRET = "bffmovimento";
 let USER_ID = 0;
 const sendsms = require("./sms");
+const rateLimit = require("express-rate-limit");
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 // USER-APP CONFIG
@@ -43,6 +44,18 @@ function verifyJWT(req, res, next) {
   });
 }
 
+// Função personalizada para manipular a resposta de erro
+const customErrorHandlerSendSms = (req, res) => {
+  res.status(429).json({ error: 'Aguarde 30 segundos para poder reenviar o código.' });
+};
+// Middleware de limitação de taxa
+const limiterSendSms = rateLimit({
+  windowMs: 30 * 1000, // 30 segundos
+  max: 1, // Limite de 5 requisições por janela de 10 segundos
+  handler: customErrorHandlerSendSms,
+});
+
+
 connectDB();
 
 // Middleware para o parsing de JSON no corpo das requisições
@@ -74,7 +87,7 @@ app.get("/validateCode", verifyJWT, (req, res) => {
   validateCode(req, res);
 });
 
-app.get("/sendSMS", (req, res) => {
+app.get("/sendSMS", limiterSendSms, (req, res) => {
   sendSMS(req, res);
 });
 
@@ -349,8 +362,25 @@ function aceitarApenasPalavras(texto) {
   return padrao.test(texto);
 }
 
-function sendSMS(req, res) {
-  res.json({ message: "SMS enviado para o telfone (74)9.8842-0307" });
+async function sendSMS(req, res) {
+  const idUser = 159; //USER_ID;
+  const resultDB = await queryDB(
+    `SELECT phone, smsCode FROM users WHERE idUser = '${idUser}'`
+  );
+  console.log(resultDB);
+  if (resultDB.length) {
+    sendsms(
+      resultDB[0].phone,
+      `Petiscaria Movimento:\n Código para entrar em sua conta: ${resultDB[0].smsCode}`
+    );
+    res.json({
+      message: `Enviamos o código para o telefone: ${resultDB[0].phone}`,
+    });
+  } else {
+    res.status(400).json({
+      message: `Não conseguimos localizar seu cadastro!`,
+    });
+  }
 }
 
 async function validateCode(req, res) {
@@ -517,7 +547,10 @@ async function validateLogin(req, res) {
      * Primeiro acesso
      */
     const smsCode = /*1234;*/ generateSMStoken();
-    sendsms(phone, `Petiscaria Movimento:\n Código para entrar em sua conta: ${smsCode}`);
+    sendsms(
+      phone,
+      `Petiscaria Movimento:\n Código para entrar em sua conta: ${smsCode}`
+    );
     console.log("codSMS:", smsCode);
     const resAddDB = await queryDB(
       `INSERT INTO users (phone, smsCode, smsStatus) VALUES ('${phone}', ${smsCode}, 'notconfirmed')`
