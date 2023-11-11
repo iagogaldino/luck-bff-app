@@ -1,10 +1,12 @@
 FROM node:18-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /usr/app
+
 COPY package*.json ./
 
-RUN npm ci
-COPY . .
+RUN npm install
+
 EXPOSE 3000
-CMD [ "npm", "start" ]
+
+CMD ["npm", "npm start"]
 # docker build -t luck-bff .

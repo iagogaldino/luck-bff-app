@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "node server.js"
+    "start": "nodemon -L node teste.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -11,6 +11,7 @@
     "jsonwebtoken": "^9.0.2",
     "mysql": "^2.18.1",
     "mysql2": "^3.6.2",
+    "nodemon": "^3.0.1",
     "qr-image": "^3.2.0",
     "request": "^2.88.2"
   }

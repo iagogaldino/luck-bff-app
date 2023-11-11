@@ -613,6 +613,7 @@ var connection;
 function handleDisconnect() {
   // Recreate the connection, since
   // the old one cannot be reused.
+  console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ iago')
   connection = mysql.createConnection({
     host: process.env.HOST, // Host do banco de dados
     user: process.env.USER, // Nome de usuário do banco de dados
